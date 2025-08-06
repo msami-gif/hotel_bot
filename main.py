@@ -84,7 +84,6 @@ def search_and_display_results():
         price = o.get('price', {}).get('total', 'N/A')
         currency = o.get('price', {}).get('currency', '')
         availability = "Available" if hotel.get('available', True) else "Not available"
-        # policies = o.get('policies', {}).get('cancellations')[0].get('description').get('text', 'No cancellation policy available')
         cancellations = o.get('policies', {}).get('cancellations', [])
         if cancellations and 'description' in cancellations[0]:
             policies = cancellations[0]['description'].get('text', 'No cancellation policy available')
