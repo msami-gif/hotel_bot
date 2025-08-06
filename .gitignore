@@ -1,3 +1,7 @@
 .venv/
 .env
 __pycache__/
+hotel-booking-frontend/node_modules
+hotel-booking-frontend/package-lock.json
+hotel-booking-frontend/package.json
+hotel-booking-frontend/public
