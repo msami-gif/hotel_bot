@@ -27,7 +27,6 @@ def extract_booking_info(user_input):
     json_str = match.group(0)
 
     try:
-        # data = json.loads(response.content if hasattr(response, 'content') else response)
         data = json.loads(json_str)
         return data
     except Exception as e:
