@@ -77,11 +77,8 @@ def search_and_display_results():
 
     reply = "\nHere are some hotel options:\n\n"
     for hotel in hotels[:10]:
-        print(f"Available" if hotel.get('available', True) else "Not available")
         h = hotel["hotel"]
         o = hotel["offers"][0]
-        print(f"Offers: {hotel['offers']}")
-        # reply += f"- {h['name']}, {h['address']['lines'][0]} – {o['price']['total']} {o['price']['currency']}\n"
         name = h.get('name', 'Unnamed Hotel')
         address = h.get('address', {}).get('lines', ['Address not available'])[0]
         price = o.get('price', {}).get('total', 'N/A')
