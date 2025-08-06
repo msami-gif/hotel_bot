@@ -48,9 +48,7 @@ def city_name_to_code(name):
     mapping = {
         "cape town": "CPT",
         "johannesburg": "JNB",
-        "durban": "DUR",
-        "london": "LON",
-        "paris": "PAR"
+        "durban": "DUR"
     }
     return mapping.get(name.lower(), name.upper())
 
