@@ -7,8 +7,8 @@ Instructions:
   - check_out_date (format: yyyy-mm-dd)
   - adults (number of adults)
 
-If the user provides the full city name, retrieve the FULL city code instead of using the full city name.
-For example if the user enters London/london, retrieve FULL the city code which is LON.
+If the user provides the full city name, retrieve the city code instead of using the full city name.
+For example if the user enters London/london, retrieve the city code which is LON.
 
 If any information is missing, return null for that field.
 
