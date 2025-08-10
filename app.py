@@ -5,12 +5,17 @@ from Agent.chatbot import hotel_booking_response
 from Agent.chatbot import extract_selected_hotel_name
 from Agent.chatbot import extract_personal_info
 from hotel_service import AmadeusHotelService
+from Utilities import utility_methods
 from pydantic import BaseModel
 import re
 import difflib
+import logging
 
 # Initialize FastAPI app
 app = FastAPI()
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Enable CORS for frontend development
 app.add_middleware(
@@ -23,6 +28,9 @@ app.add_middleware(
 
 # Instantiate the Amadeus service
 hotel_service = AmadeusHotelService.AmadeusHotelService()
+
+# Utility methods
+
 
 # In-memory state per session (simplified for now)
 state = {
@@ -46,7 +54,6 @@ class BookingRequest(BaseModel):
 def is_booking_complete(state):
     required_fields = ["destination", "check_in_date", "check_out_date", "adults"]
     return all(state.get(k) for k in required_fields)
-    # return all(state.values())
 
 def update_state(extracted_data):
     for key in state:
@@ -65,6 +72,12 @@ def city_name_to_code(name):
         "durban": "DUR"
     }
     return mapping.get(name.lower(), name.upper())
+
+def normalize_name(s: str) -> str:
+    """Lowercase + remove non-alphanumerics for stable comparisons."""
+    if not s:
+        return ""
+    return re.sub(r"[^a-z0-9]+", "", s.lower().strip()) 
 
 def search_and_display_results():
     print("Entering search and display results function")
@@ -104,6 +117,7 @@ def search_and_display_results():
 # Endpoint for frontend to call
 @app.post("/request_hotel")
 async def book_hotel(req: BookingRequest):
+    logger.info("Received booking request from user.")
     user_input = req.message
     extracted = extract_booking_info(user_input)
 
@@ -119,27 +133,21 @@ async def book_hotel(req: BookingRequest):
     else:
         return {"summary": ask_for_missing_info(), "results": None}
     
-
-def normalize_name(s: str) -> str:
-    """Lowercase + remove non-alphanumerics for stable comparisons."""
-    if not s:
-        return ""
-    return re.sub(r"[^a-z0-9]+", "", s.lower().strip()) 
    
 # 2. Handle hotel selection from user input
 @app.post("/select_hotel")
 async def select_hotel(req: BookingRequest):
-    # Guard: are we expecting a selection right now?
+    logger.info("Processing hotel selection from user input.")
     if not state.get("awaiting_selection") or not state.get("hotels"):
         return {"error": "Not currently awaiting hotel selection."}
 
     user_input = req.message
-
+    logger(user_input)
     # 1) Call your extractor (it may return a str or dict or None)
     try:
         raw_result = extract_selected_hotel_name(user_input, state["hotels"])
     except Exception as e:
-        print("❌ Error during extraction:", e)
+        logger.error("❌ Error during extraction:", e)
         return {"error": "Failed to interpret selection. Please type the hotel name exactly as shown."}
 
     # 2) Coerce raw_result to a hotel name string if possible

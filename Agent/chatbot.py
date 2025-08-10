@@ -6,6 +6,11 @@ import subprocess
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
 import json
+import logging
+
+# Configure basic logging (e.g., to console)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Load model
 model = OllamaLLM(model="llama3")
@@ -32,6 +37,7 @@ def invoke_template(template_name: str, variables: dict):
     return response.content if hasattr(response, 'content') else str(response)
 
 def format_hotels_for_prompt(hotels):
+    logger.info("Formatting hotel list for prompt")
     lines = []
     for i, hotel in enumerate(hotels[:10]):
         h = hotel.get("hotel", {})
@@ -70,6 +76,7 @@ def chat_completion(prompt: str, model: str = "llama3") -> str:
     return result.stdout.strip()
 
 def extract_booking_info(user_input):
+    logger.info("Extracting booking information from user input.")
     response = chain.invoke({
         "question": user_input
     })
@@ -92,6 +99,8 @@ def extract_booking_info(user_input):
     
 def hotel_booking_response(state, hotel_list):
     # // PROMPT: I would like to book a hotel in Paris from the 15th to the 20th of September 2025 for two adults
+    logger.info("Getting the list hotels to display to the user.")
+
     with open("Template/hotel_options.txt", "r", encoding="utf-8") as f:
         booking_template = f.read()
 
@@ -99,7 +108,6 @@ def hotel_booking_response(state, hotel_list):
     chain = prompt | model  # using your OllamaLLM model
 
     hotel_text = format_hotels_for_prompt(hotel_list).strip()
-    print("Formatted hotel list for prompt:" + hotel_text)
     
     response = chain.invoke({
         "destination": state["destination"],
@@ -109,15 +117,12 @@ def hotel_booking_response(state, hotel_list):
         "hotel_list": hotel_text
     })
 
-    print("Generated LLM prompt for hotel selection:")
-    print(hotel_list)
-    print("Response from LLM:")
-    print(response)
     return response.content if hasattr(response, "content") else str(response)
 
 def extract_selected_hotel_name(user_input: str, hotel_list: list):
     # Use LLM to extract name string from user input 
     # // PROMPT: I would like to book a room at The Ritz Hotel
+    logger.info("Extracting hotel name from user input.")
     if not hotel_list:
         raise ValueError("❌ Hotel list is empty. Cannot match selection.")
 
@@ -131,15 +136,15 @@ def extract_selected_hotel_name(user_input: str, hotel_list: list):
 
     extracted_name = result.strip().split("\n")[0].strip()
     normalized_extracted = normalize_name(extracted_name)
-    print("🔎 LLM Extracted Hotel Name:", extracted_name)
+    logger.info(f"Extracted the hotel name from LLM response: {extracted_name}")
 
     # Step 2: Try to find a close match among the normalized hotel names
     hotel_names = [normalize_name(hotel.get("hotel", {}).get("name")) for hotel in hotel_list]
     close_matches = difflib.get_close_matches(normalized_extracted, hotel_names, n=1, cutoff=0.5)
+    logger.info(f"Close matches found: {close_matches}")
 
-    print("🔎 Extracted hotel name from LLM:", extracted_name)
-    print("🧾 Normalized user input:", normalized_extracted)
-    print("🏨 Available hotels:", [normalize_name(hotel.get("hotel", {}).get("name")) for hotel in hotel_list])
+    logger.info(f"Normalized user input: {normalized_extracted}")
+    logger.info(f"Available hotels: {[normalize_name(hotel.get('hotel', {}).get('name')) for hotel in hotel_list]}")
 
     if close_matches:
         for hotel in hotel_list:
